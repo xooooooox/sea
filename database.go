@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strings"
 )
 
 // db database connect instance
@@ -54,7 +55,9 @@ func SqlRowsExport(rows *sql.Rows, export interface{}) error {
 				childVal := reflect.Indirect(childValue)
 				fields := []interface{}{}
 				for _, column := range columns {
-					field := childVal.FieldByName(UnderlineToPascal(column))
+					// force all field names to lowercase to prevent rows.Scan panic
+					columnLower := strings.ToLower(column)
+					field := childVal.FieldByName(UnderlineToPascal(columnLower))
 					if field == reflectZeroValue || !field.CanSet() {
 						bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 						bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))
@@ -79,7 +82,9 @@ func SqlRowsExport(rows *sql.Rows, export interface{}) error {
 				childVal := reflect.Indirect(childValue)
 				fields := []interface{}{}
 				for _, column := range columns {
-					field := childVal.FieldByName(UnderlineToPascal(column))
+					// force all field names to lowercase to prevent rows.Scan panic
+					columnLower := strings.ToLower(column)
+					field := childVal.FieldByName(UnderlineToPascal(columnLower))
 					if field == reflectZeroValue || !field.CanSet() {
 						bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 						bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))
@@ -107,7 +112,9 @@ func SqlRowsExport(rows *sql.Rows, export interface{}) error {
 		fields := []interface{}{}
 		for rows.Next() {
 			for _, column := range columns {
-				field := childVal.FieldByName(UnderlineToPascal(column))
+				// force all field names to lowercase to prevent rows.Scan panic
+				columnLower := strings.ToLower(column)
+				field := childVal.FieldByName(UnderlineToPascal(columnLower))
 				if field == reflectZeroValue || !field.CanSet() {
 					bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 					bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))

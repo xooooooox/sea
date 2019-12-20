@@ -24,6 +24,7 @@ func SetDbInstance(instance *sql.DB) bool {
 
 // export must be &[]AnyStruct, &[]*AnyStruct,&AnyStruct
 // database table column value cannot be null, database allow filed is null value, and rows.Scan(...) will panic
+// named columns with uppercase letters will result in null values ​​of the corresponding type, for example: TABLE_NAME, Table_name, table_Name
 // when the column value is null, take string type as an example:
 // Tip: Although there are ways to deal with the issue of allowing null values, it is not recommended to use allow null
 // 1:structure field type string => *string

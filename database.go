@@ -9,6 +9,19 @@ import (
 // db database connect instance
 var db *sql.DB
 
+// SetDbInstance
+func SetDbInstance(instance *sql.DB) bool {
+	if instance == nil {
+		return false
+	}
+	err := instance.Ping()
+	if err != nil {
+		return false
+	}
+	db = instance
+	return true
+}
+
 // export must be &[]AnyStruct, &[]*AnyStruct,&AnyStruct
 // database table column value cannot be null, database allow filed is null value, and rows.Scan(...) will panic
 // when the column value is null, take string type as an example:

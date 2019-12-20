@@ -32,16 +32,16 @@ func Update(table interface{}, update map[string]interface{}, args ...interface{
 	// no where conditions
 	if lengthArgs == 0 {
 		// need with set args
-		return Execute(db,sql, bindArgs...)
+		return Execute(db, sql, bindArgs...)
 	}
 	// set fixed where conditions
 	sql += fmt.Sprintf(" WHERE (%s)", args[0])
 	if lengthArgs == 1 {
-		return Execute(db,sql)
+		return Execute(db, sql)
 	}
 	// set conditions and carry parameters, where:args[0] args:args[1:]...
 	bindArgs = append(bindArgs, args[1:]...)
-	return Execute(db,sql, bindArgs...)
+	return Execute(db, sql, bindArgs...)
 }
 
 // UpdateById update database.table values by id
@@ -66,5 +66,5 @@ func UpdateById(table interface{}, update map[string]interface{}, id int64) (int
 	setColumn = strings.TrimRight(setColumn, ",")
 	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE(`id`=?)", tableName, setColumn)
 	bindArgs = append(bindArgs, id)
-	return Execute(db,sql, bindArgs...)
+	return Execute(db, sql, bindArgs...)
 }

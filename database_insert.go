@@ -76,7 +76,7 @@ func InsertOne(x interface{}) (id int64, err error) {
 	}
 	table.Column = strings.TrimRight(table.Column, ",")
 	table.Values = strings.TrimRight(table.Values, ",")
-	return ExecuteInsertOne(db,fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)", table.Table, table.Column, table.Values), table.Args...)
+	return ExecuteInsertOne(db, fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)", table.Table, table.Column, table.Values), table.Args...)
 }
 
 // InsertMore return the number of affected rows and an error
@@ -123,7 +123,7 @@ func InsertMore(x ...interface{}) (int64, error) {
 	}
 	var rows int64 = 0
 	for _, v := range tables {
-		row, err := Execute(db,v.Sql, v.Args...)
+		row, err := Execute(db, v.Sql, v.Args...)
 		if err != nil {
 			return 0, err
 		}

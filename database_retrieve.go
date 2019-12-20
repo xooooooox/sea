@@ -6,7 +6,7 @@ import (
 
 // Select
 func Select(export interface{}, query string, args ...interface{}) error {
-	return Query(db,export,query,args...)
+	return Query(db, export, query, args...)
 }
 
 // Query exec query sql, return *sql.Rows data to specific interface

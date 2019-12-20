@@ -21,14 +21,14 @@ func Delete(table interface{}, args ...interface{}) (int64, error) {
 	lengthArgs := len(args)
 	// set fixed where conditions
 	if lengthArgs == 0 {
-		return Execute(db,sql)
+		return Execute(db, sql)
 	}
 	// set conditions and carry parameters, where:args[0] args:args[1:]...
 	sql += fmt.Sprintf(" WHERE (%s)", args[0])
 	if lengthArgs == 1 {
-		return Execute(db,sql)
+		return Execute(db, sql)
 	}
-	return Execute(db,sql,args[1:]...)
+	return Execute(db, sql, args[1:]...)
 }
 
 // DeleteById delete record by id from table, return affected rows
@@ -42,5 +42,5 @@ func DeleteById(table interface{}, id int64) (int64, error) {
 	if kind != reflect.Struct {
 		return 0, errors.New("neither *AnyStruct nor AnyStruct")
 	}
-	return Execute(db,fmt.Sprintf("DELETE FROM `%s` WHERE (`id`=?)", PascalToUnderline(t.Name())), id)
+	return Execute(db, fmt.Sprintf("DELETE FROM `%s` WHERE (`id`=?)", PascalToUnderline(t.Name())), id)
 }

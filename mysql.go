@@ -52,3 +52,34 @@ type InformationSchemaColumns struct {
 	IsGenerated            string  `json:"is_generated"`
 	GenerationExpression   *string `json:"generation_expression"`
 }
+
+var (
+	// InformationSchemaSystemAllDatabases mysql/mariadb system table
+	InformationSchemaSystemAllDatabases []string = []string{"information_schema", "mysql", "performance_schema"}
+)
+
+// InformationSchemaAllDatabases all databases
+func InformationSchemaAllDatabases() ([]string, error) {
+	dbs := []string{}
+	rows, err := db.Query("SHOW DATABASES")
+	if err != nil {
+		return dbs, err
+	}
+	for rows.Next() {
+		db := ""
+		err = rows.Scan(&db)
+		if err != nil {
+			return dbs, err
+		}
+		dbs = append(dbs, db)
+	}
+	return dbs, nil
+}
+
+// InformationSchemaAllDatabases all tables
+func InformationSchemaAllTables(database string) ([]InformationSchemaTables, error) {
+	tables := []InformationSchemaTables{}
+	query := "SELECT * FROM `information_schema`.`TABLES` WHERE(`TABLE_SCHEMA`=? AND `TABLE_TYPE`='BASE TABLE')"
+	err := Select(&tables, query, database)
+	return tables, err
+}

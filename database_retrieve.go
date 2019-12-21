@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-// Select
+// Select run query type sql, return an error
 func Select(export interface{}, query string, args ...interface{}) error {
 	return Query(db, export, query, args...)
 }

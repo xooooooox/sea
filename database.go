@@ -16,7 +16,7 @@ type TransactionSql struct {
 	Args []interface{}
 }
 
-// SetDbInstance
+// SetDbInstance set db instance
 func SetDbInstance(instance *sql.DB) bool {
 	if instance == nil {
 		return false
@@ -38,6 +38,7 @@ func SetDbInstance(instance *sql.DB) bool {
 // 2:structure field type string => sql.NullString
 // 3:sql  SELECT IFNULL(`age`,0) AS `age`,IFNULL(`name`,'Bob') AS `name`,IFNULL(`email`,'') AS `email` FROM ...
 // 4:sql  SELECT COALESCE(`age`,0) AS `age`,COALESCE(`name`,'Bob') AS `name`,COALESCE(`email`,'') AS `email` FROM ...
+
 // SqlRowsExport export *sql.rows data to interface
 func SqlRowsExport(rows *sql.Rows, export interface{}) error {
 	err := errors.New("is not *[]AnyStruct, *[]*AnyStruct or *AnyStruct type")

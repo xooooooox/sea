@@ -83,3 +83,11 @@ func InformationSchemaAllTables(database string) ([]InformationSchemaTables, err
 	err := Select(&tables, query, database)
 	return tables, err
 }
+
+// InformationSchemaAllColumns all columns
+func InformationSchemaAllColumns(database, table string) ([]InformationSchemaColumns, error) {
+	columns := []InformationSchemaColumns{}
+	query := "SELECT * FROM `information_schema`.`COLUMNS` WHERE(`TABLE_SCHEMA`=? AND `TABLE_NAME`=?)"
+	err := Select(&columns, query, database, table)
+	return columns, err
+}

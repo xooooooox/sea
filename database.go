@@ -3,7 +3,6 @@ package sea
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -188,7 +187,7 @@ func Transaction(executes []TransactionSql) error {
 		if err != nil {
 			txErr := tx.Rollback()
 			if txErr != nil {
-				log.Println(err.Error())
+				err = txErr
 			}
 			return err
 		}
@@ -196,14 +195,14 @@ func Transaction(executes []TransactionSql) error {
 		if err != nil {
 			txErr := tx.Rollback()
 			if txErr != nil {
-				log.Println(err.Error())
+				err = txErr
 			}
 			return err
 		}
 	}
 	txErr := tx.Commit()
 	if txErr != nil {
-		log.Println(err.Error())
+		err = txErr
 	}
 	return nil
 }

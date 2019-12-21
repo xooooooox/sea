@@ -3,12 +3,19 @@ package sea
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"reflect"
 	"strings"
 )
 
 // db database connect instance
 var db *sql.DB
+
+// TransactionSql atom execute sql
+type TransactionSql struct {
+	Sql  string
+	Args []interface{}
+}
 
 // SetDbInstance
 func SetDbInstance(instance *sql.DB) bool {
@@ -160,4 +167,43 @@ func ExecuteInsertOne(db *sql.DB, query string, args ...interface{}) (int64, err
 		return 0, err
 	}
 	return id, nil
+}
+
+// Transaction atom execute more sqls
+func Transaction(executes []TransactionSql) error {
+	length := len(executes)
+	if length == 0 {
+		return nil
+	}
+	if length == 1 {
+		_, err := Execute(db, executes[0].Sql, executes[1].Args...)
+		return err
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	for i := 0; i < length; i++ {
+		result, err := tx.Exec(executes[i].Sql, executes[i].Args...)
+		if err != nil {
+			txErr := tx.Rollback()
+			if txErr != nil {
+				log.Println(err.Error())
+			}
+			return err
+		}
+		_, err = result.RowsAffected()
+		if err != nil {
+			txErr := tx.Rollback()
+			if txErr != nil {
+				log.Println(err.Error())
+			}
+			return err
+		}
+	}
+	txErr := tx.Commit()
+	if txErr != nil {
+		log.Println(err.Error())
+	}
+	return nil
 }

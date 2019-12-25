@@ -68,12 +68,12 @@ func InformationSchemaAllDatabases() ([]string, error) {
 		return dbs, err
 	}
 	for rows.Next() {
-		db := ""
-		err = rows.Scan(&db)
+		name := ""
+		err = rows.Scan(&name)
 		if err != nil {
 			return dbs, err
 		}
-		dbs = append(dbs, db)
+		dbs = append(dbs, name)
 	}
 	return dbs, nil
 }

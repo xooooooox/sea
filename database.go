@@ -379,3 +379,15 @@ func Atom(execute []SqlArgs) error {
 	}
 	return nil
 }
+
+// Batch execute more sql
+func Batch(execute []SqlArgs) error {
+	length := len(execute)
+	for i := 0; i < length; i++ {
+		_, err := Exec(execute[i].Sql, execute[i].Args...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

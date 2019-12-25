@@ -37,7 +37,7 @@ func Update(table interface{}, update map[string]interface{}, args ...interface{
 	// set fixed where conditions
 	sql += fmt.Sprintf(" WHERE (%s)", args[0])
 	if lengthArgs == 1 {
-		return Execute(db, sql)
+		return Execute(db, sql,bindArgs...)
 	}
 	// set conditions and carry parameters, where:args[0] args:args[1:]...
 	bindArgs = append(bindArgs, args[1:]...)

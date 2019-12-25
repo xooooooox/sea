@@ -1,3 +1,5 @@
+// Copyright (C) xooooooox
+
 package sea
 
 // InformationSchemaTables information_schema.TABLES
@@ -80,7 +82,7 @@ func InformationSchemaAllDatabases() ([]string, error) {
 func InformationSchemaAllTables(database string) ([]InformationSchemaTables, error) {
 	tables := []InformationSchemaTables{}
 	query := "SELECT * FROM `information_schema`.`TABLES` WHERE(`TABLE_SCHEMA`=? AND `TABLE_TYPE`='BASE TABLE')"
-	err := Select(&tables, query, database)
+	err := Get(&tables, query, database)
 	return tables, err
 }
 
@@ -88,6 +90,6 @@ func InformationSchemaAllTables(database string) ([]InformationSchemaTables, err
 func InformationSchemaAllColumns(database, table string) ([]InformationSchemaColumns, error) {
 	columns := []InformationSchemaColumns{}
 	query := "SELECT * FROM `information_schema`.`COLUMNS` WHERE(`TABLE_SCHEMA`=? AND `TABLE_NAME`=?)"
-	err := Select(&columns, query, database, table)
+	err := Get(&columns, query, database, table)
 	return columns, err
 }

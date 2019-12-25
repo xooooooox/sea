@@ -1,4 +1,4 @@
-// naming conversion
+// Copyright (C) xooooooox
 
 package sea
 

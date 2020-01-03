@@ -32,6 +32,11 @@ func Instance(instance *sql.DB) error {
 	return nil
 }
 
+// DB get database instance
+func DB() *sql.DB {
+	return db;
+}
+
 // Add insert one or more rows, auto_increment id / the number of affected rows, error
 func Add(adds ...interface{}) (int64, error) {
 	length := len(adds)

@@ -1,26 +1,12 @@
 package sea
 
-import "reflect"
+import (
+	"fmt"
+	"time"
+)
 
-// GetTableName get table name
-func GetTableName(table interface{}) string {
-	t := reflect.TypeOf(table)
-	kind := t.Kind()
-	switch kind {
-	case reflect.String:
-		return PascalToUnderline(table.(string))
-	case reflect.Struct:
-		return PascalToUnderline(t.Name())
-	case reflect.Ptr:
-		kind := t.Elem().Kind()
-		if kind == reflect.Struct {
-			return PascalToUnderline(t.Elem().Name())
-		}
-		if kind == reflect.String {
-			return PascalToUnderline(table.(string))
-		}
-	default:
-
-	}
-	return ""
+// DatetimeUnixNano
+func DatetimeUnixNano() string {
+	now := time.Now()
+	return fmt.Sprintf("%s %d", now.Format("2006-01-02 15:04:05"), now.UnixNano())
 }

@@ -54,21 +54,17 @@ func Qy(table ...string) Inquirer {
 	q := &Inquiry{}
 	// select * from person,dept where person.did = dept.did;
 	for _, v := range table {
+		v = Flutter(v)
 		if q.table == "" {
-			q.table = fmt.Sprintf("%s", Flutter(v))
-		} else {
-			q.table = fmt.Sprintf("%s, %s", q.table, Flutter(v))
+			q.table = fmt.Sprintf("%s", v)
+			continue
 		}
+		q.table = fmt.Sprintf("%s, %s", q.table, v)
 	}
 	return q
 }
 
 func (q *Inquiry) Cols(cols ...string) Inquirer {
-	length := len(cols)
-	if length == 0 {
-		return q
-	}
-	q.cols = []string{}
 	q.cols = append(q.cols, cols...)
 	return q
 }
@@ -96,54 +92,56 @@ func (q *Inquiry) Join(join ...string) Inquirer {
 }
 
 func (q *Inquiry) Where(where string, args ...interface{}) Inquirer {
+	q.args = append(q.args, args...)
 	where = FlutterSentence(where)
 	if q.where == "" {
 		q.where = where
-	} else {
-		q.where = fmt.Sprintf("%s AND %s", q.where, where)
+		return q
 	}
-	q.args = append(q.args, args...)
+	q.where = fmt.Sprintf("%s AND %s", q.where, where)
 	return q
 }
 
 func (q *Inquiry) Group(group ...string) Inquirer {
-	length := len(group)
-	for i := 0; i < length; i++ {
+	for _, v := range group {
+		v = Flutter(v)
 		if q.group == "" {
-			q.group = Flutter(group[i])
+			q.group = v
 			continue
 		}
-		q.group = fmt.Sprintf("%s, %s", q.group, Flutter(group[i]))
+		q.group = fmt.Sprintf("%s, %s", q.group, v)
 	}
 	return q
 }
 
 func (q *Inquiry) Having(having string, args ...interface{}) Inquirer {
+	q.args = append(q.args, args...)
 	having = FlutterSentence(having)
 	if q.having == "" {
 		q.having = having
-	} else {
-		q.having = fmt.Sprintf("%s AND %s", q.having, having)
+		return q
 	}
-	q.args = append(q.args, args...)
+	q.having = fmt.Sprintf("%s AND %s", q.having, having)
 	return q
 }
 
 func (q *Inquiry) Asc(order string) Inquirer {
+	order = Flutter(order)
 	if q.order == "" {
-		q.order = fmt.Sprintf("%s ASC", Flutter(order))
+		q.order = fmt.Sprintf("%s ASC", order)
 		return q
 	}
-	q.order = fmt.Sprintf("%s, %s ASC", q.order, Flutter(order))
+	q.order = fmt.Sprintf("%s, %s ASC", q.order, order)
 	return q
 }
 
 func (q *Inquiry) Desc(order string) Inquirer {
+	order = Flutter(order)
 	if q.order == "" {
-		q.order = fmt.Sprintf("%s DESC", Flutter(order))
+		q.order = fmt.Sprintf("%s DESC", order)
 		return q
 	}
-	q.order = fmt.Sprintf("%s, %s DESC", q.order, Flutter(order))
+	q.order = fmt.Sprintf("%s, %s DESC", q.order, order)
 	return q
 }
 

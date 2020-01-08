@@ -50,7 +50,7 @@ type Inquiry struct {
 	args []interface{}
 }
 
-func Qy(table ...string) Inquirer {
+func Qry(table ...string) Inquirer {
 	q := &Inquiry{}
 	// select * from person,dept where person.did = dept.did;
 	for _, v := range table {

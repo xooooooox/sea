@@ -188,6 +188,20 @@ func FlutterSentence(s string) string {
 				result = rightBracket(result, vn)
 				break
 			}
+			// comparison symbol for example: email='abc@gmail.com'
+			hasSymbol := false
+			symbol := []string{"=", ">", "<>", "!=", ">=", "<="}
+			for _, v := range symbol {
+				if strings.Index(vn,v) > 0 {
+					vn = strings.ReplaceAll(vn,v,fmt.Sprintf(" %s ",v))
+					result = fmt.Sprintf("%s %s",result,FlutterSentence(vn))
+					hasSymbol = true
+					break
+				}
+			}
+			if hasSymbol {
+				break
+			}
 			// flutter
 			result = flutter(result, vn)
 		}

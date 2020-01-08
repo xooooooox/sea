@@ -113,81 +113,83 @@ func FlutterSentence(s string) string {
 		return s
 	}
 	result := ""
+	// origin
+	origin := func(result, node string) string {
+		if result == "" {
+			return node
+		} else {
+			return fmt.Sprintf("%s %s", result, node)
+		}
+	}
+	// to upper
+	upper := func(result, node string) string {
+		return origin(result, strings.ToUpper(node))
+	}
+	// left bracket prefix
+	leftBracket := func(result, node string) string {
+		node = strings.TrimPrefix(node, "(")
+		node = Flutter(node)
+		if result == "" {
+			return fmt.Sprintf("(%s", node)
+		} else {
+			return fmt.Sprintf("%s (%s", result, node)
+		}
+	}
+	// right bracket suffix
+	rightBracket := func(result, node string) string {
+		node = strings.TrimSuffix(node, ")")
+		node = Flutter(node)
+		if result == "" {
+			return fmt.Sprintf("%s)", node)
+		} else {
+			return fmt.Sprintf("%s %s)", result, node)
+		}
+	}
+	// flutter
+	flutter := func(result, node string) string {
+		return origin(result, Flutter(node))
+	}
 	nodes := strings.Fields(s)
 	for _, vn := range nodes {
 		vn = strings.TrimSpace(vn)
 		switch vn {
 		// not change
 		case "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC", "=", ">", "<>", "!=", ">=", "<=", "?", "0", "''", "\"\"":
-			if result == "" {
-				result = vn
-			} else {
-				result = fmt.Sprintf("%s %s", result, vn)
-			}
+			result = origin(result, vn)
 		// to upper
 		case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
-			if result == "" {
-				result = strings.ToUpper(vn)
-			} else {
-				result = fmt.Sprintf("%s %s", result, strings.ToUpper(vn))
-			}
+			result = upper(result, vn)
 		// default other happening
 		default:
 			// not change
 			if strings.Index(vn, "'") >= 0 || strings.Index(vn, "\"") >= 0 {
-				if result == "" {
-					result = vn
-				} else {
-					result = fmt.Sprintf("%s %s", result, vn)
-				}
+				result = origin(result, vn)
 				break
 			}
 			// not change
 			_, err := strconv.ParseInt(vn, 10, 64)
 			if err == nil {
-				if result == "" {
-					result = vn
-				} else {
-					result = fmt.Sprintf("%s %s", result, vn)
-				}
+				result = origin(result, vn)
 				break
 			}
 			// not change
 			_, err = strconv.ParseFloat(vn, 64)
 			if err == nil {
-				if result == "" {
-					result = vn
-				} else {
-					result = fmt.Sprintf("%s %s", result, vn)
-				}
+				result = origin(result, vn)
 				break
 			}
 			// ( prefix
 			if strings.HasPrefix(vn, "(") {
-				vn = strings.TrimPrefix(vn, "(")
-				if result == "" {
-					result = fmt.Sprintf("(%s", Flutter(vn))
-				} else {
-					result = fmt.Sprintf("%s (%s", result, Flutter(vn))
-				}
+				result = leftBracket(result, vn)
 				break
 			}
 			// ) suffix
 			if strings.HasSuffix(vn, ")") {
-				vn = strings.TrimPrefix(vn, ")")
-				if result == "" {
-					result = fmt.Sprintf("%s)", Flutter(vn))
-				} else {
-					result = fmt.Sprintf("%s %s)", result, Flutter(vn))
-				}
+				result = rightBracket(result, vn)
 				break
 			}
 			// flutter
-			if result == "" {
-				result = Flutter(vn)
-			} else {
-				result = fmt.Sprintf("%s %s", result, Flutter(vn))
-			}
+			result = flutter(result, vn)
 		}
 	}
 	return result

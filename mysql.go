@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -73,25 +72,45 @@ func Flutter(s string) string {
 	if !FlutterSql {
 		return s
 	}
+	// user; u.name; `u`.`name`; u.`name`; name,email; u.name,u.email; ""; ,; ?; >100; >-100; <>100; =20.99; name='jack'; id=0
 	// remove all spaces before and after the string
 	s = strings.TrimSpace(s)
 	// replace spaces in the string with ""
 	s = strings.ReplaceAll(s, " ", "")
-	// there is no space in the string of s
-	if s == "" || s == "," || s == "?" {
+	switch s {
+	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")", "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC":
+		return s
+	case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
+		return strings.ToUpper(s)
+	default:
+	}
+	// number value
+	if StrIsNumber(s) {
 		return s
 	}
-	// user.id,user.name,user.email; user.id,user.name,`user`.`email`
+	// string value
+	if strings.Index(s, `'`) == 0 || strings.Index(s, `"`) == 0 {
+		return s
+	}
+	// prefix and suffix
+	if strings.HasPrefix(s, "(") {
+		return fmt.Sprintf("( %s", Flutter(strings.TrimPrefix(s, "(")))
+	}
+	if strings.HasSuffix(s, ")") {
+		return fmt.Sprintf("%s )", Flutter(strings.TrimSuffix(s, ")")))
+	}
+	// columns
 	comma := ","
 	if strings.Index(s, comma) >= 0 {
 		str := ""
 		nodes := strings.Split(s, comma)
 		for _, v := range nodes {
+			v = Flutter(v)
 			if str == "" {
-				str = Flutter(v)
+				str = v
 				continue
 			}
-			str = fmt.Sprintf("%s, %s", str, Flutter(v))
+			str = fmt.Sprintf("%s, %s", str, v)
 		}
 		return str
 	}
@@ -101,110 +120,55 @@ func Flutter(s string) string {
 		s = strings.ReplaceAll(s, flutter, "")
 		return Flutter(s)
 	}
+	// ,"(",")"
+	symbol := []string{"<>", "!=", ">=", "<=", ">", "<", "="} // these symbols exist in the string(vn)
+	for _, v := range symbol {
+		index := strings.Index(s, v)
+		if index < 0 {
+			continue
+		}
+		result := ""
+		lv := len(v)
+		// prefix
+		if strings.HasPrefix(s, v) {
+			s = v + " " + s[index+lv:]
+		} else if strings.HasSuffix(s, v) { // suffix
+			s = s[:index] + " " + v
+		} else { // middle
+			s = s[:index] + " " + v + " " + s[index+lv:]
+		}
+		node := strings.Fields(s)
+		for _, v := range node {
+			v = Flutter(v)
+			if result == "" {
+				result = v
+				continue
+			}
+			result = fmt.Sprintf("%s %s", result, v)
+		}
+		return result
+	}
+
 	// user; id; email; user.id; u.name
 	point := "."
 	fpf := fmt.Sprintf("%s%s%s", flutter, point, flutter)
 	return fmt.Sprintf("%s%s%s", flutter, strings.ReplaceAll(s, point, fpf), flutter)
 }
 
-// FlutterSentence `flutter flutter flutter flutter`
-func FlutterSentence(s string) string {
+// Flutters
+func Flutters(s string) string {
 	if !FlutterSql {
 		return s
 	}
 	result := ""
-	// origin
-	origin := func(result, node string) string {
+	node := strings.Fields(s)
+	for _, v := range node {
+		v = Flutter(v)
 		if result == "" {
-			return node
-		} else {
-			return fmt.Sprintf("%s %s", result, node)
+			result = v
+			continue
 		}
-	}
-	// to upper
-	upper := func(result, node string) string {
-		return origin(result, strings.ToUpper(node))
-	}
-	// left bracket prefix
-	leftBracket := func(result, node string) string {
-		node = strings.TrimPrefix(node, "(")
-		node = Flutter(node)
-		if result == "" {
-			return fmt.Sprintf("(%s", node)
-		} else {
-			return fmt.Sprintf("%s (%s", result, node)
-		}
-	}
-	// right bracket suffix
-	rightBracket := func(result, node string) string {
-		node = strings.TrimSuffix(node, ")")
-		node = Flutter(node)
-		if result == "" {
-			return fmt.Sprintf("%s)", node)
-		} else {
-			return fmt.Sprintf("%s %s)", result, node)
-		}
-	}
-	// flutter
-	flutter := func(result, node string) string {
-		return origin(result, Flutter(node))
-	}
-	nodes := strings.Fields(s)
-	for _, vn := range nodes {
-		vn = strings.TrimSpace(vn)
-		switch vn {
-		// not change
-		case "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC", "=", ">", "<>", "!=", ">=", "<=", "?", "0", "''", "\"\"":
-			result = origin(result, vn)
-		// to upper
-		case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
-			result = upper(result, vn)
-		// default other happening
-		default:
-			// not change
-			if strings.Index(vn, "'") >= 0 || strings.Index(vn, "\"") >= 0 {
-				result = origin(result, vn)
-				break
-			}
-			// not change
-			_, err := strconv.ParseInt(vn, 10, 64)
-			if err == nil {
-				result = origin(result, vn)
-				break
-			}
-			// not change
-			_, err = strconv.ParseFloat(vn, 64)
-			if err == nil {
-				result = origin(result, vn)
-				break
-			}
-			// ( prefix
-			if strings.HasPrefix(vn, "(") {
-				result = leftBracket(result, vn)
-				break
-			}
-			// ) suffix
-			if strings.HasSuffix(vn, ")") {
-				result = rightBracket(result, vn)
-				break
-			}
-			// comparison symbol for example: email='abc@gmail.com' name=? id=10 balance=0.25
-			hasSymbol := false
-			symbol := []string{"=", ">", "<>", "!=", ">=", "<="} // these symbols exist in the string(vn)
-			for _, v := range symbol {
-				if strings.Index(vn,v) > 0 {
-					vn = strings.ReplaceAll(vn,v,fmt.Sprintf(" %s ",v))
-					result = fmt.Sprintf("%s %s",result,FlutterSentence(vn))
-					hasSymbol = true
-					break
-				}
-			}
-			if hasSymbol {
-				break
-			}
-			// flutter
-			result = flutter(result, vn)
-		}
+		result = fmt.Sprintf("%s %s", result, v)
 	}
 	return result
 }

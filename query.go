@@ -81,7 +81,7 @@ func (q *Inquiry) Alias(alias string) Inquirer {
 
 func (q *Inquiry) Join(join ...string) Inquirer {
 	for _, v := range join {
-		v = FlutterSentence(v)
+		v = Flutters(v)
 		if q.join == "" {
 			q.join = v
 			continue
@@ -93,7 +93,7 @@ func (q *Inquiry) Join(join ...string) Inquirer {
 
 func (q *Inquiry) Where(where string, args ...interface{}) Inquirer {
 	q.args = append(q.args, args...)
-	where = FlutterSentence(where)
+	where = Flutters(where)
 	if q.where == "" {
 		q.where = where
 		return q
@@ -116,7 +116,7 @@ func (q *Inquiry) Group(group ...string) Inquirer {
 
 func (q *Inquiry) Having(having string, args ...interface{}) Inquirer {
 	q.args = append(q.args, args...)
-	having = FlutterSentence(having)
+	having = Flutters(having)
 	if q.having == "" {
 		q.having = having
 		return q

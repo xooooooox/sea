@@ -8,6 +8,7 @@ import (
 	"reflect"
 )
 
+// Inquirer Inquirer
 type Inquirer interface {
 	Cols(...string) Inquirer
 	Table(string) Inquirer
@@ -23,6 +24,7 @@ type Inquirer interface {
 	Get(interface{}) error
 }
 
+// Inquiry Inquiry
 type Inquiry struct {
 	// column name
 	cols []string
@@ -50,11 +52,12 @@ type Inquiry struct {
 	args []interface{}
 }
 
+// Qry Query
 func Qry(table ...string) Inquirer {
 	q := &Inquiry{}
 	// select * from person,dept where person.did = dept.did;
 	for _, v := range table {
-		v = Flutter(v)
+		v = fn(v)
 		if q.table == "" {
 			q.table = fmt.Sprintf("%s", v)
 			continue
@@ -64,24 +67,28 @@ func Qry(table ...string) Inquirer {
 	return q
 }
 
+// Cols Columns
 func (q *Inquiry) Cols(cols ...string) Inquirer {
 	q.cols = append(q.cols, cols...)
 	return q
 }
 
+// Table Table Name
 func (q *Inquiry) Table(table string) Inquirer {
-	q.table = Flutter(table)
+	q.table = fn(table)
 	return q
 }
 
+// Alias Alias
 func (q *Inquiry) Alias(alias string) Inquirer {
-	q.alias = Flutter(alias)
+	q.alias = fn(alias)
 	return q
 }
 
+// Join Join
 func (q *Inquiry) Join(join ...string) Inquirer {
 	for _, v := range join {
-		v = Flutters(v)
+		v = fws(v)
 		if q.join == "" {
 			q.join = v
 			continue
@@ -91,9 +98,10 @@ func (q *Inquiry) Join(join ...string) Inquirer {
 	return q
 }
 
+// Where Where
 func (q *Inquiry) Where(where string, args ...interface{}) Inquirer {
 	q.args = append(q.args, args...)
-	where = Flutters(where)
+	where = fws(where)
 	if q.where == "" {
 		q.where = where
 		return q
@@ -102,9 +110,10 @@ func (q *Inquiry) Where(where string, args ...interface{}) Inquirer {
 	return q
 }
 
+// Group Group
 func (q *Inquiry) Group(group ...string) Inquirer {
 	for _, v := range group {
-		v = Flutter(v)
+		v = fn(v)
 		if q.group == "" {
 			q.group = v
 			continue
@@ -114,9 +123,10 @@ func (q *Inquiry) Group(group ...string) Inquirer {
 	return q
 }
 
+// Having Having
 func (q *Inquiry) Having(having string, args ...interface{}) Inquirer {
 	q.args = append(q.args, args...)
-	having = Flutters(having)
+	having = fws(having)
 	if q.having == "" {
 		q.having = having
 		return q
@@ -125,8 +135,9 @@ func (q *Inquiry) Having(having string, args ...interface{}) Inquirer {
 	return q
 }
 
+// Asc Order By ASC
 func (q *Inquiry) Asc(order string) Inquirer {
-	order = Flutter(order)
+	order = fn(order)
 	if q.order == "" {
 		q.order = fmt.Sprintf("%s ASC", order)
 		return q
@@ -135,8 +146,9 @@ func (q *Inquiry) Asc(order string) Inquirer {
 	return q
 }
 
+// Desc Order By DESC
 func (q *Inquiry) Desc(order string) Inquirer {
-	order = Flutter(order)
+	order = fn(order)
 	if q.order == "" {
 		q.order = fmt.Sprintf("%s DESC", order)
 		return q
@@ -145,16 +157,19 @@ func (q *Inquiry) Desc(order string) Inquirer {
 	return q
 }
 
+// Page Page
 func (q *Inquiry) Page(page uint64) Inquirer {
 	q.page = page
 	return q
 }
 
+// Limit Limit
 func (q *Inquiry) Limit(limit uint64) Inquirer {
 	q.limit = limit
 	return q
 }
 
+// Get Get query result
 func (q *Inquiry) Get(get interface{}) error {
 	// check columns first
 	cols := ""
@@ -162,7 +177,7 @@ func (q *Inquiry) Get(get interface{}) error {
 		cols = "*"
 	} else {
 		for _, v := range q.cols {
-			v = Flutter(v)
+			v = fn(v)
 			if cols == "" {
 				cols = v
 				continue
@@ -181,14 +196,14 @@ func (q *Inquiry) Get(get interface{}) error {
 		kind = t.Kind()
 		switch kind {
 		case reflect.Struct:
-			q.table = Flutter(PascalToUnderline(t.Name()))
+			q.table = fn(PascalToUnderline(t.Name()))
 		case reflect.Slice:
 			t = t.Elem()
 			kind = t.Kind()
 			if kind == reflect.Ptr {
 				t = t.Elem()
 			}
-			q.table = Flutter(PascalToUnderline(t.Name()))
+			q.table = fn(PascalToUnderline(t.Name()))
 		default:
 			return errors.New("unsupported data type")
 		}

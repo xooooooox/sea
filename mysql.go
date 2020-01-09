@@ -63,49 +63,71 @@ type InformationSchemaColumns struct {
 }
 
 var (
-	// InformationSchemaSystemAllDatabases system database
+	// InformationSchemaSystemAllDatabases System database
 	InformationSchemaSystemAllDatabases []string = []string{"information_schema", "mysql", "performance_schema"}
 )
 
-// Flutter `flutter`
-func Flutter(s string) string {
-	if !FlutterSql {
-		return s
-	}
-	// user; u.name; `u`.`name`; u.`name`; name,email; u.name,u.email; ""; ,; ?; >100; >-100; <>100; =20.99; name='jack'; id=0
-	// remove all spaces before and after the string
+//func fr(s string) string {
+//	s = strings.TrimSpace(s)
+//	s = strings.ReplaceAll(s, " ", "")
+//	switch s {
+//	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")":
+//		return s
+//	case "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC":
+//		return s
+//	case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
+//		return strings.ToUpper(s)
+//	default:
+//	}
+//	// number value
+//	if StrIsNumber(s) {
+//		return s
+//	}
+//	// string value
+//	if strings.Index(s, `'`) == 0 || strings.Index(s, `"`) == 0 {
+//		return s
+//	}
+//	// prefix and suffix WHERE ( (user = ?) AND (email = ?) )
+//	if strings.HasPrefix(s, "(") {
+//		return fmt.Sprintf("( %s", fr(strings.TrimPrefix(s, "(")))
+//	}
+//	if strings.HasSuffix(s, ")") {
+//		return fmt.Sprintf("%s )", fr(strings.TrimSuffix(s, ")")))
+//	}
+//	// columns
+//	if strings.Index(s, ",") >= 0 {
+//		str := ""
+//		nodes := strings.Split(s, ",")
+//		for _, v := range nodes {
+//			v = fr(v)
+//			if str == "" {
+//				str = v
+//				continue
+//			}
+//			str = fmt.Sprintf("%s, %s", str, v)
+//		}
+//		return str
+//	}
+//	// user; id; email; user.id; u.name; u.`group`
+//	s = strings.ReplaceAll(s, "`", "")
+//	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, ".", "`.`"))
+//}
+
+// fn Format name
+func fn(s string) string {
 	s = strings.TrimSpace(s)
-	// replace spaces in the string with ""
 	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, "`", "")
 	switch s {
-	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")", "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC":
+	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")":
 		return s
-	case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
-		return strings.ToUpper(s)
 	default:
 	}
-	// number value
-	if StrIsNumber(s) {
-		return s
-	}
-	// string value
-	if strings.Index(s, `'`) == 0 || strings.Index(s, `"`) == 0 {
-		return s
-	}
-	// prefix and suffix
-	if strings.HasPrefix(s, "(") {
-		return fmt.Sprintf("( %s", Flutter(strings.TrimPrefix(s, "(")))
-	}
-	if strings.HasSuffix(s, ")") {
-		return fmt.Sprintf("%s )", Flutter(strings.TrimSuffix(s, ")")))
-	}
-	// columns
-	comma := ","
-	if strings.Index(s, comma) >= 0 {
+	if strings.Index(s, ",") >= 0 {
 		str := ""
-		nodes := strings.Split(s, comma)
+		nodes := strings.Split(s, ",")
 		for _, v := range nodes {
-			v = Flutter(v)
+			v = fn(v)
 			if str == "" {
 				str = v
 				continue
@@ -114,56 +136,47 @@ func Flutter(s string) string {
 		}
 		return str
 	}
-	// `name`; `user`.`id`; u.`group`
-	flutter := "`"
-	if strings.Index(s, flutter) >= 0 {
-		s = strings.ReplaceAll(s, flutter, "")
-		return Flutter(s)
-	}
-	// ,"(",")"
-	symbol := []string{"<>", "!=", ">=", "<=", ">", "<", "="} // these symbols exist in the string(vn)
-	for _, v := range symbol {
-		index := strings.Index(s, v)
-		if index < 0 {
-			continue
-		}
-		result := ""
-		lv := len(v)
-		// prefix
-		if strings.HasPrefix(s, v) {
-			s = v + " " + s[index+lv:]
-		} else if strings.HasSuffix(s, v) { // suffix
-			s = s[:index] + " " + v
-		} else { // middle
-			s = s[:index] + " " + v + " " + s[index+lv:]
-		}
-		node := strings.Fields(s)
-		for _, v := range node {
-			v = Flutter(v)
-			if result == "" {
-				result = v
-				continue
-			}
-			result = fmt.Sprintf("%s %s", result, v)
-		}
-		return result
-	}
-
-	// user; id; email; user.id; u.name
-	point := "."
-	fpf := fmt.Sprintf("%s%s%s", flutter, point, flutter)
-	return fmt.Sprintf("%s%s%s", flutter, strings.ReplaceAll(s, point, fpf), flutter)
+	// user; id; email; user.id; u.name; u.`group`
+	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, ".", "`.`"))
 }
 
-// Flutters
-func Flutters(s string) string {
-	if !FlutterSql {
+// fw Format where
+func fw(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, " ", "")
+	switch s {
+	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")":
+		return s
+	case "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC":
+		return s
+	case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
+		return strings.ToUpper(s)
+	default:
+	}
+	// age = 18 AND balance = -0.05
+	if StrIsNumber(s) {
 		return s
 	}
+	// username = 'xooooooox' OR username = "XOOOOOOOX"
+	if strings.Index(s, `'`) == 0 || strings.Index(s, `"`) == 0 {
+		return s
+	}
+	// WHERE ( (user = ?) AND (email = ?) )
+	if strings.HasPrefix(s, "(") {
+		return fmt.Sprintf("( %s", fw(strings.TrimPrefix(s, "(")))
+	}
+	if strings.HasSuffix(s, ")") {
+		return fmt.Sprintf("%s )", fw(strings.TrimSuffix(s, ")")))
+	}
+	return fn(s)
+}
+
+// fws Format wheres
+func fws(s string) string {
 	result := ""
 	node := strings.Fields(s)
 	for _, v := range node {
-		v = Flutter(v)
+		v = fw(v)
 		if result == "" {
 			result = v
 			continue
@@ -173,7 +186,7 @@ func Flutters(s string) string {
 	return result
 }
 
-// Add auto_increment id value/the number of affected rows, error
+// Add The auto_increment id value/the number of affected rows, error
 func Add(adds ...interface{}) (int64, error) {
 	switch len(adds) {
 	case 0:
@@ -185,7 +198,7 @@ func Add(adds ...interface{}) (int64, error) {
 	}
 }
 
-// addRow the auto_increment id value and an error
+// addRow The auto_increment id value and an error
 func addRow(raw interface{}) (int64, error) {
 	err := errors.New("neither *AnyStruct nor AnyStruct")
 	t, v := reflect.TypeOf(raw), reflect.ValueOf(raw)
@@ -203,15 +216,15 @@ func addRow(raw interface{}) (int64, error) {
 	length := t.NumField()
 	for i := 0; i < length; i++ {
 		if column == "" {
-			column = fmt.Sprintf("%s", Flutter(PascalToUnderline(t.Field(i).Name)))
+			column = fmt.Sprintf("%s", fn(PascalToUnderline(t.Field(i).Name)))
 			values = "?"
 		} else {
-			column = fmt.Sprintf("%s, %s", column, Flutter(PascalToUnderline(t.Field(i).Name)))
+			column = fmt.Sprintf("%s, %s", column, fn(PascalToUnderline(t.Field(i).Name)))
 			values = fmt.Sprintf("%s, %s", values, "?")
 		}
 		args = append(args, v.Field(i).Interface())
 	}
-	sql := fmt.Sprintf("INSERT INTO %s ( %s ) VALUES ( %s )", Flutter(PascalToUnderline(t.Name())), column, values)
+	sql := fmt.Sprintf("INSERT INTO %s ( %s ) VALUES ( %s )", fn(PascalToUnderline(t.Name())), column, values)
 	if LogSql {
 		fmt.Println(DatetimeUnixNano(), sql, args)
 	}
@@ -222,7 +235,7 @@ func addRow(raw interface{}) (int64, error) {
 	return result.LastInsertId()
 }
 
-// addRows the number of affected rows and an error
+// addRows The number of affected rows and an error
 func addRows(raws ...interface{}) (int64, error) {
 	length := len(raws)
 	err := errors.New("some members are neither *AnyStruct nor AnyStruct")
@@ -245,10 +258,10 @@ func addRows(raws ...interface{}) (int64, error) {
 		for j := 0; j < v.NumField(); j++ {
 			adds[i].Table = PascalToUnderline(t.Name())
 			if adds[i].Column == "" {
-				adds[i].Column = fmt.Sprintf("%s", Flutter(PascalToUnderline(t.Field(j).Name)))
+				adds[i].Column = fmt.Sprintf("%s", fn(PascalToUnderline(t.Field(j).Name)))
 				adds[i].Values = fmt.Sprintf("%s", "?")
 			} else {
-				adds[i].Column = fmt.Sprintf("%s, %s", adds[i].Column, Flutter(PascalToUnderline(t.Field(j).Name)))
+				adds[i].Column = fmt.Sprintf("%s, %s", adds[i].Column, fn(PascalToUnderline(t.Field(j).Name)))
 				adds[i].Values = fmt.Sprintf("%s, %s", adds[i].Values, "?")
 			}
 			adds[i].Args = append(adds[i].Args, v.Field(j).Interface())
@@ -265,7 +278,7 @@ func addRows(raws ...interface{}) (int64, error) {
 				Sql  string
 				Args []interface{}
 			}{
-				Sql:  fmt.Sprintf("INSERT INTO %s ( %s ) VALUES ( %s )", Flutter(adds[i].Table), adds[i].Column, adds[i].Values),
+				Sql:  fmt.Sprintf("INSERT INTO %s ( %s ) VALUES ( %s )", fn(adds[i].Table), adds[i].Column, adds[i].Values),
 				Args: adds[i].Args,
 			}
 			continue
@@ -291,23 +304,23 @@ func addRows(raws ...interface{}) (int64, error) {
 
 // Del Delete
 func Del(table string, where string, args ...interface{}) (int64, error) {
-	table = Flutter(table)
-	return Exec(fmt.Sprintf("DELETE FROM %s WHERE ( %s )", table, where), args...)
+	table = fn(table)
+	return Exec(fmt.Sprintf("DELETE FROM %s WHERE ( %s )", table, fws(where)), args...)
 }
 
 // Mod Update
 func Mod(table string, cols []string, where string, args ...interface{}) (int64, error) {
-	table = Flutter(table)
+	table = fn(table)
 	columns := ""
 	for _, v := range cols {
-		v = Flutter(v)
+		v = fn(v)
 		if columns == "" {
 			columns = fmt.Sprintf("%s = ?", v)
 			continue
 		}
 		columns = fmt.Sprintf("%s, %s = ?", columns, v)
 	}
-	return Exec(fmt.Sprintf("UPDATE %s SET %s WHERE ( %s )", table, columns, where), args...)
+	return Exec(fmt.Sprintf("UPDATE %s SET %s WHERE ( %s )", table, columns, fws(where)), args...)
 }
 
 // result must be &[]AnyStruct, &[]*AnyStruct,&AnyStruct
@@ -429,7 +442,7 @@ func Get(result interface{}, query string, args ...interface{}) error {
 	}
 }
 
-// InformationSchemaAllDatabases all databases
+// InformationSchemaAllDatabases All databases
 func InformationSchemaAllDatabases() ([]string, error) {
 	dbs := []string{}
 	rows, err := DB.Query("SHOW DATABASES")
@@ -447,7 +460,7 @@ func InformationSchemaAllDatabases() ([]string, error) {
 	return dbs, nil
 }
 
-// InformationSchemaAllDatabases all tables
+// InformationSchemaAllDatabases All tables
 func InformationSchemaAllTables(database string) ([]InformationSchemaTables, error) {
 	tables := []InformationSchemaTables{}
 	query := "SELECT * FROM `information_schema`.`TABLES` WHERE(`TABLE_SCHEMA`=? AND `TABLE_TYPE`='BASE TABLE')"
@@ -455,7 +468,7 @@ func InformationSchemaAllTables(database string) ([]InformationSchemaTables, err
 	return tables, err
 }
 
-// InformationSchemaAllColumns all columns
+// InformationSchemaAllColumns All columns
 func InformationSchemaAllColumns(database, table string) ([]InformationSchemaColumns, error) {
 	columns := []InformationSchemaColumns{}
 	query := "SELECT * FROM `information_schema`.`COLUMNS` WHERE(`TABLE_SCHEMA`=? AND `TABLE_NAME`=?)"

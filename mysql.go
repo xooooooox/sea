@@ -67,52 +67,6 @@ var (
 	InformationSchemaSystemAllDatabases []string = []string{"information_schema", "mysql", "performance_schema"}
 )
 
-//func fr(s string) string {
-//	s = strings.TrimSpace(s)
-//	s = strings.ReplaceAll(s, " ", "")
-//	switch s {
-//	case "", ",", "?", "0", "''", "\"\"", "<>", "!=", ">=", "<=", ">", "<", "=", "(", ")":
-//		return s
-//	case "LEFT", "RIGHT", "OUT", "JOIN", "AND", "ON", "NOT", "BETWEEN", "OR", "IN", "LIKE", "AS", "ASC", "DESC":
-//		return s
-//	case "left", "right", "out", "join", "and", "on", "not", "between", "or", "in", "like", "as", "asc", "desc":
-//		return strings.ToUpper(s)
-//	default:
-//	}
-//	// number value
-//	if StrIsNumber(s) {
-//		return s
-//	}
-//	// string value
-//	if strings.Index(s, `'`) == 0 || strings.Index(s, `"`) == 0 {
-//		return s
-//	}
-//	// prefix and suffix WHERE ( (user = ?) AND (email = ?) )
-//	if strings.HasPrefix(s, "(") {
-//		return fmt.Sprintf("( %s", fr(strings.TrimPrefix(s, "(")))
-//	}
-//	if strings.HasSuffix(s, ")") {
-//		return fmt.Sprintf("%s )", fr(strings.TrimSuffix(s, ")")))
-//	}
-//	// columns
-//	if strings.Index(s, ",") >= 0 {
-//		str := ""
-//		nodes := strings.Split(s, ",")
-//		for _, v := range nodes {
-//			v = fr(v)
-//			if str == "" {
-//				str = v
-//				continue
-//			}
-//			str = fmt.Sprintf("%s, %s", str, v)
-//		}
-//		return str
-//	}
-//	// user; id; email; user.id; u.name; u.`group`
-//	s = strings.ReplaceAll(s, "`", "")
-//	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, ".", "`.`"))
-//}
-
 // fn Format name
 func fn(s string) string {
 	s = strings.TrimSpace(s)

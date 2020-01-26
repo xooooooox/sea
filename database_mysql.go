@@ -3,6 +3,7 @@
 package sea
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -321,6 +322,159 @@ func InformationSchemaAllTables(database string) (tables []InformationSchemaTabl
 // InformationSchemaAllColumns All columns
 func InformationSchemaAllColumns(database, table string) (columns []InformationSchemaColumns, err error) {
 	return columns, Get(&columns, "SELECT * FROM `information_schema`.`COLUMNS` WHERE ( `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? )", database, table)
+}
+
+// Transaction Transaction
+type Transaction struct {
+	Tx *sql.Tx
+}
+
+// Begin Begin
+func Begin() (*Transaction, error) {
+	ts := &Transaction{}
+	tx, err := DB.Begin()
+	if err != nil {
+		return ts, err
+	}
+	ts.Tx = tx
+	return ts, nil
+}
+
+// Rollback Rollback
+func (ts *Transaction) Rollback() error {
+	return ts.Tx.Rollback()
+}
+
+// Commit Commit
+func (ts *Transaction) Commit() error {
+	return ts.Tx.Commit()
+}
+
+// Exec Execute a sql statement return affected rows and an error
+func (ts *Transaction) Exec(query string, args ...interface{}) (int64, error) {
+	result, err := ts.Tx.Exec(query, args...)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+// Add Add
+func (ts *Transaction) Add(insert ...interface{}) (int64, error) {
+	if len(insert) == 1 {
+		return ts.add(insert[0])
+	}
+	return ts.adds(insert...)
+}
+
+// add Insert one row
+func (ts *Transaction) add(row interface{}) (id int64, err error) {
+	err = errors.New("please pass in a structure parameter")
+	if row == nil {
+		return id, err
+	}
+	t, v := reflect.TypeOf(row), reflect.ValueOf(row)
+	if t.Kind() != reflect.Ptr {
+		return id, err
+	}
+	t, v = t.Elem(), v.Elem()
+	column, values, args := "", "", []interface{}{}
+	for i := 0; i < t.NumField(); i++ {
+		args = append(args, v.Field(i).Interface())
+		if column == "" {
+			column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(i).Name))
+			values = "?"
+			continue
+		}
+		column = fmt.Sprintf("%s, `%s`", column, PascalToUnderline(t.Field(i).Name))
+		values = fmt.Sprintf("%s, %s", values, "?")
+	}
+	result, err := ts.Tx.Exec(fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", PascalToUnderline(t.Name()), column, values), args...)
+	if err != nil {
+		return id, err
+	}
+	return result.LastInsertId()
+}
+
+// adds Insert more rows
+func (ts *Transaction) adds(rows ...interface{}) (affectedRows int64, err error) {
+	type insert struct {
+		Table  string
+		Column string
+		Values string
+		Args   []interface{}
+	}
+	type exec struct {
+		Sql  string
+		Args []interface{}
+	}
+	length := len(rows)
+	err = errors.New("please pass in the structure parameters")
+	inserts := make([]insert, length, length)
+	for i := 0; i < length; i++ {
+		if rows[i] == nil {
+			return affectedRows, err
+		}
+		t, v := reflect.TypeOf(rows[i]), reflect.ValueOf(rows[i])
+		if t.Kind() != reflect.Ptr {
+			return affectedRows, err
+		}
+		t, v = t.Elem(), v.Elem()
+		for j := 0; j < v.NumField(); j++ {
+			inserts[i].Table = PascalToUnderline(t.Name())
+			inserts[i].Args = append(inserts[i].Args, v.Field(j).Interface())
+			if inserts[i].Column == "" {
+				inserts[i].Column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(j).Name))
+				inserts[i].Values = "?"
+				continue
+			}
+			inserts[i].Column = fmt.Sprintf("%s, `%s`", inserts[i].Column, PascalToUnderline(t.Field(j).Name))
+			inserts[i].Values = fmt.Sprintf("%s, %s", inserts[i].Values, "?")
+		}
+	}
+	execs := map[string]exec{}
+	for i := 0; i < length; i++ {
+		table := inserts[i].Table
+		if execs[table].Sql == "" {
+			execs[table] = exec{
+				Sql:  fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", inserts[i].Table, inserts[i].Column, inserts[i].Values),
+				Args: inserts[i].Args,
+			}
+			continue
+		}
+		execs[table] = exec{
+			Sql:  fmt.Sprintf("%s, ( %s )", execs[table].Sql, inserts[i].Values),
+			Args: append(execs[table].Args, inserts[i].Args...),
+		}
+	}
+	for _, val := range execs {
+		ar, err := ts.Exec(val.Sql, val.Args...)
+		if err != nil {
+			return affectedRows, err
+		}
+		affectedRows += ar
+	}
+	return affectedRows, nil
+}
+
+// Del Delete records from a table
+func (ts *Transaction) Del(table string, where string, args ...interface{}) (int64, error) {
+	return ts.Exec(fmt.Sprintf("DELETE FROM `%s` WHERE ( %s )", table, where), args...)
+}
+
+// Mod Update records from a table
+func (ts *Transaction) Mod(table string, cols map[string]interface{}, where string, args ...interface{}) (int64, error) {
+	columns := ""
+	values := []interface{}{}
+	for col, val := range cols {
+		values = append(values, val)
+		if columns == "" {
+			columns = fmt.Sprintf("`%s` = ?", col)
+			continue
+		}
+		columns = fmt.Sprintf("%s, `%s` = ?", columns, col)
+	}
+	return ts.Exec(fmt.Sprintf("UPDATE `%s` SET %s WHERE ( %s )", table, columns, where), append(values, args...)...)
 }
 
 // Inquirer Inquirer

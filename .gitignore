@@ -12,7 +12,3 @@
 *.a
 *.so
 *.out
-
-# some go source file
-*_test.go
-*_ignore.go

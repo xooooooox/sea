@@ -1,1 +1,1 @@
-### go operating mysql/mariadb database data
+### go mysql or mariadb database

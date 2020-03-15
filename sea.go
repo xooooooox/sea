@@ -4,13 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/xooooooox/arm"
 	"reflect"
 	"strings"
 )
 
-// DB Database connect instance
-var DB *sql.DB
+var (
+	// DB Database connect instance
+	DB *sql.DB
+	// InformationSchemaSystemAllDatabases System database
+	InformationSchemaSystemAllDatabases []string
+)
+
+func init() {
+	InformationSchemaSystemAllDatabases = []string{"information_schema", "mysql", "performance_schema"}
+}
 
 // Exec Execute a sql statement return affected rows and an error
 func Exec(query string, args ...interface{}) (int64, error) {
@@ -78,11 +85,6 @@ type InformationSchemaColumns struct {
 	GenerationExpression   *string `json:"generation_expression"`
 }
 
-var (
-	// InformationSchemaSystemAllDatabases System database
-	InformationSchemaSystemAllDatabases []string = []string{"information_schema", "mysql", "performance_schema"}
-)
-
 // Add Insert one or more rows
 func Add(insert ...interface{}) (int64, error) {
 	if len(insert) == 1 {
@@ -106,14 +108,14 @@ func add(row interface{}) (id int64, err error) {
 	for i := 0; i < t.NumField(); i++ {
 		args = append(args, v.Field(i).Interface())
 		if column == "" {
-			column = fmt.Sprintf("`%s`", arm.PascalToUnderline(t.Field(i).Name))
+			column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(i).Name))
 			values = "?"
 			continue
 		}
-		column = fmt.Sprintf("%s, `%s`", column, arm.PascalToUnderline(t.Field(i).Name))
+		column = fmt.Sprintf("%s, `%s`", column, PascalToUnderline(t.Field(i).Name))
 		values = fmt.Sprintf("%s, %s", values, "?")
 	}
-	result, err := DB.Exec(fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", arm.PascalToUnderline(t.Name()), column, values), args...)
+	result, err := DB.Exec(fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", PascalToUnderline(t.Name()), column, values), args...)
 	if err != nil {
 		return id, err
 	}
@@ -145,14 +147,14 @@ func adds(rows ...interface{}) (affectedRows int64, err error) {
 		}
 		t, v = t.Elem(), v.Elem()
 		for j := 0; j < v.NumField(); j++ {
-			inserts[i].Table = arm.PascalToUnderline(t.Name())
+			inserts[i].Table = PascalToUnderline(t.Name())
 			inserts[i].Args = append(inserts[i].Args, v.Field(j).Interface())
 			if inserts[i].Column == "" {
-				inserts[i].Column = fmt.Sprintf("`%s`", arm.PascalToUnderline(t.Field(j).Name))
+				inserts[i].Column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(j).Name))
 				inserts[i].Values = "?"
 				continue
 			}
-			inserts[i].Column = fmt.Sprintf("%s, `%s`", inserts[i].Column, arm.PascalToUnderline(t.Field(j).Name))
+			inserts[i].Column = fmt.Sprintf("%s, `%s`", inserts[i].Column, PascalToUnderline(t.Field(j).Name))
 			inserts[i].Values = fmt.Sprintf("%s, %s", inserts[i].Values, "?")
 		}
 	}
@@ -235,7 +237,7 @@ func Get(result interface{}, query string, args ...interface{}) error {
 			rows.Next()
 			for _, column := range columns {
 				// force all field names to lowercase to prevent rows.Scan panic
-				field := dataVal.FieldByName(arm.UnderlineToPascal(strings.ToLower(column)))
+				field := dataVal.FieldByName(UnderlineToPascal(strings.ToLower(column)))
 				if field == reflectZeroValue || !field.CanSet() {
 					bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 					bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))
@@ -262,7 +264,7 @@ func Get(result interface{}, query string, args ...interface{}) error {
 				fields := []interface{}{}
 				for _, column := range columns {
 					// force all field names to lowercase to prevent rows.Scan panic
-					field := dataVal.FieldByName(arm.UnderlineToPascal(strings.ToLower(column)))
+					field := dataVal.FieldByName(UnderlineToPascal(strings.ToLower(column)))
 					if field == reflectZeroValue || !field.CanSet() {
 						bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 						bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))
@@ -287,7 +289,7 @@ func Get(result interface{}, query string, args ...interface{}) error {
 				dataVal := reflect.Indirect(data)
 				fields := []interface{}{}
 				for _, column := range columns {
-					field := dataVal.FieldByName(arm.UnderlineToPascal(strings.ToLower(column)))
+					field := dataVal.FieldByName(UnderlineToPascal(strings.ToLower(column)))
 					if field == reflectZeroValue || !field.CanSet() {
 						bytesTypePtrValue := reflect.New(reflect.TypeOf([]byte{}))
 						bytesTypePtrValue.Elem().Set(reflect.ValueOf([]byte{}))
@@ -397,14 +399,14 @@ func (ts *Transaction) add(row interface{}) (id int64, err error) {
 	for i := 0; i < t.NumField(); i++ {
 		args = append(args, v.Field(i).Interface())
 		if column == "" {
-			column = fmt.Sprintf("`%s`", arm.PascalToUnderline(t.Field(i).Name))
+			column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(i).Name))
 			values = "?"
 			continue
 		}
-		column = fmt.Sprintf("%s, `%s`", column, arm.PascalToUnderline(t.Field(i).Name))
+		column = fmt.Sprintf("%s, `%s`", column, PascalToUnderline(t.Field(i).Name))
 		values = fmt.Sprintf("%s, %s", values, "?")
 	}
-	result, err := ts.Tx.Exec(fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", arm.PascalToUnderline(t.Name()), column, values), args...)
+	result, err := ts.Tx.Exec(fmt.Sprintf("INSERT INTO `%s` ( %s ) VALUES ( %s )", PascalToUnderline(t.Name()), column, values), args...)
 	if err != nil {
 		return id, err
 	}
@@ -436,14 +438,14 @@ func (ts *Transaction) adds(rows ...interface{}) (affectedRows int64, err error)
 		}
 		t, v = t.Elem(), v.Elem()
 		for j := 0; j < v.NumField(); j++ {
-			inserts[i].Table = arm.PascalToUnderline(t.Name())
+			inserts[i].Table = PascalToUnderline(t.Name())
 			inserts[i].Args = append(inserts[i].Args, v.Field(j).Interface())
 			if inserts[i].Column == "" {
-				inserts[i].Column = fmt.Sprintf("`%s`", arm.PascalToUnderline(t.Field(j).Name))
+				inserts[i].Column = fmt.Sprintf("`%s`", PascalToUnderline(t.Field(j).Name))
 				inserts[i].Values = "?"
 				continue
 			}
-			inserts[i].Column = fmt.Sprintf("%s, `%s`", inserts[i].Column, arm.PascalToUnderline(t.Field(j).Name))
+			inserts[i].Column = fmt.Sprintf("%s, `%s`", inserts[i].Column, PascalToUnderline(t.Field(j).Name))
 			inserts[i].Values = fmt.Sprintf("%s, %s", inserts[i].Values, "?")
 		}
 	}
@@ -671,14 +673,14 @@ func (q *Inquiry) Get(get interface{}) error {
 		kind = t.Kind()
 		switch kind {
 		case reflect.Struct:
-			q.table = arm.PascalToUnderline(t.Name())
+			q.table = PascalToUnderline(t.Name())
 		case reflect.Slice:
 			t = t.Elem()
 			kind = t.Kind()
 			if kind == reflect.Ptr {
 				t = t.Elem()
 			}
-			q.table = arm.PascalToUnderline(t.Name())
+			q.table = PascalToUnderline(t.Name())
 		default:
 			return errors.New("unsupported data type")
 		}
@@ -712,4 +714,43 @@ func (q *Inquiry) Get(get interface{}) error {
 		q.sql = fmt.Sprintf("%s LIMIT %d,%d", q.sql, (q.page-1)*q.limit, q.limit)
 	}
 	return Get(get, q.sql, q.args...)
+}
+
+// PascalToUnderline XxxYyy to xxx_yyy
+func PascalToUnderline(s string) string {
+	tmp := []byte{}
+	j := false
+	num := len(s)
+	for i := 0; i < num; i++ {
+		d := s[i]
+		if i > 0 && d >= 'A' && d <= 'Z' && j {
+			tmp = append(tmp, '_')
+		}
+		if d != '_' {
+			j = true
+		}
+		tmp = append(tmp, d)
+	}
+	return strings.ToLower(string(tmp[:]))
+}
+
+// UnderlineToPascal xxx_yyy to XxxYyy
+func UnderlineToPascal(s string) string {
+	tmp := []byte{}
+	bytes := []byte(s)
+	length := len(bytes)
+	nextLetterNeedToUpper := true
+	for i := 0; i < length; i++ {
+		if bytes[i] == '_' {
+			nextLetterNeedToUpper = true
+			continue
+		}
+		if nextLetterNeedToUpper && bytes[i] >= 'a' && bytes[i] <= 'z' {
+			tmp = append(tmp, bytes[i]-32)
+		} else {
+			tmp = append(tmp, bytes[i])
+		}
+		nextLetterNeedToUpper = false
+	}
+	return string(tmp[:])
 }
